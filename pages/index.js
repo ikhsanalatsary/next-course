@@ -1,65 +1,128 @@
-import Head from 'next/head'
-import styles from '../styles/Home.module.css'
+import { makeStyles } from "@material-ui/core/styles";
+import Box from "@material-ui/core/Box";
+import Button from "@material-ui/core/Button";
+import Card from "@material-ui/core/Card";
+import CardActions from "@material-ui/core/CardActions";
+import CardMedia from "@material-ui/core/CardMedia";
+import CardContent from "@material-ui/core/CardContent";
+import Container from "@material-ui/core/Container";
+import Grid from "@material-ui/core/Grid";
+import Typography from "@material-ui/core/Typography";
+import Skeleton from "@material-ui/lab/Skeleton";
+import { gql, useQuery } from "@apollo/client";
+import Link from "next/link";
 
-export default function Home() {
+let COURSE_EVENTS_CONNECTION = gql`
+  query Course {
+    courseEvents: courseEvents_connection(first: 10) {
+      pageInfo {
+        endCursor
+        hasNextPage
+        hasPreviousPage
+        startCursor
+      }
+      edges {
+        cursor
+        node {
+          id
+          publicId
+          course {
+            name
+            description
+          }
+        }
+      }
+    }
+  }
+`;
+
+const useStyles = makeStyles((theme) => {
+  return {
+    root: {
+      flexGrow: 1,
+      padding: theme.spacing(2),
+    },
+    cardMedia: {
+      paddingTop: "56.25%", // 16:9
+    },
+  };
+});
+
+/**
+ * @param {Props} props - react props
+ */
+export default function Home(props) {
+  const classes = useStyles();
+  const { data, error, loading } = useQuery(COURSE_EVENTS_CONNECTION);
+  if (error) return <div>Error loading courses.</div>;
   return (
-    <div className={styles.container}>
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
-
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p>
-
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+    <div className={classes.root}>
+      <Container maxWidth="md">
+        <Grid
+          container
+          spacing={2}
+          direction="row"
+          justify="center"
+          alignItems="center"
         >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
-        </a>
-      </footer>
+          {(loading ? Array.from({ length: 2 }) : data.courseEvents.edges).map(
+            (elem, index) => (
+              <Grid item xs={12} sm={6} key={elem ? elem.node.id : index}>
+                <Card>
+                  {elem ? (
+                    <CardMedia
+                      className={classes.cardMedia}
+                      image="https://picsum.photos/500"
+                      title={elem.node.course.name}
+                    />
+                  ) : (
+                    <Skeleton variant="rect" width={500} height={300} />
+                  )}
+
+                  <CardContent>
+                    {elem ? (
+                      <>
+                        <Typography gutterBottom variant="h5" component="h2">
+                          {elem.node.course.name}
+                        </Typography>
+                        <Typography>{elem.node.course.description}</Typography>
+                      </>
+                    ) : (
+                      <Box pt={0.5}>
+                        <Skeleton />
+                        <Skeleton width="80%" />
+                        <Skeleton width="60%" />
+                      </Box>
+                    )}
+                  </CardContent>
+
+                  {elem && (
+                    <CardActions>
+                      <Button size="small" color="primary">
+                        <Link href={`/${elem.node.id}`}>
+                          <a>View</a>
+                        </Link>
+                      </Button>
+                    </CardActions>
+                  )}
+                </Card>
+              </Grid>
+            )
+          )}
+        </Grid>
+      </Container>
     </div>
-  )
+  );
+}
+
+/** @typedef {import('next').GetServerSidePropsContext} GetServerSidePropsContext  */
+/** @typedef {import('next').InferGetServerSidePropsType} InferGetServerSidePropsType  */
+/** @typedef {InferGetServerSidePropsType<typeof getServerSideProps>} Props  */
+
+/**
+ * @param {GetServerSidePropsContext} ctx - GetServerSidePropsContext
+ */
+export async function getServerSideProps(ctx) {
+  // Pass data to the page via props
+  return { props: {} };
 }
