@@ -151,7 +151,9 @@ export default function CourseDetail(props) {
       },
     });
   }, [fetchMore, data]);
-  let students = data?.courseEvent?.students?.edges ?? [];
+  let courseEvents = data?.courseEvent ?? {};
+  let students = courseEvents.students?.edges ?? [];
+  let hasNextPage = courseEvents.students?.pageInfo?.hasNextPage ?? false;
   if (error) {
     return (
       <div className={classes.root}>
@@ -266,23 +268,25 @@ export default function CourseDetail(props) {
                       )
                     )}
                   </List>
-                  <Box m={2} display="flex" justifyContent="center">
-                    <Button
-                      size="medium"
-                      color="secondary"
-                      variant="outlined"
-                      startIcon={
-                        loadingMore ? (
-                          <CircularProgress size={20} />
-                        ) : (
-                          <MoreIcon />
-                        )
-                      }
-                      onClick={handleLoadMore}
-                    >
-                      Load More
-                    </Button>
-                  </Box>
+                  {hasNextPage && (
+                    <Box m={2} display="flex" justifyContent="center">
+                      <Button
+                        size="medium"
+                        color="secondary"
+                        variant="outlined"
+                        startIcon={
+                          loadingMore ? (
+                            <CircularProgress size={20} />
+                          ) : (
+                            <MoreIcon />
+                          )
+                        }
+                        onClick={handleLoadMore}
+                      >
+                        Load More
+                      </Button>
+                    </Box>
+                  )}
                 </TabPanel>
               </Card>
             ) : (
