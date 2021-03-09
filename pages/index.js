@@ -98,7 +98,7 @@ export default function Home(props) {
 
                   {elem && (
                     <CardActions>
-                      <Button size="small" color="primary">
+                      <Button size="medium" color="primary">
                         <Link href={`/${elem.node.id}`}>
                           <a>View</a>
                         </Link>
