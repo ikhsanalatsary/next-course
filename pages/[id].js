@@ -133,6 +133,7 @@ export default function CourseDetail(props) {
       },
       updateQuery: (previousResult, { fetchMoreResult }) => {
         const newStudents = fetchMoreResult.courseEvent.students.edges;
+        // eslint-disable-next-line prefer-destructuring
         const pageInfo = fetchMoreResult.courseEvent.students.pageInfo;
         const { students, ...excludeStudent } = previousResult.courseEvent;
         setLoadingMore(false);
@@ -263,7 +264,7 @@ export default function CourseDetail(props) {
                           <Divider variant="middle" component="li" />
                         </>,
                         {
-                          key: row.node.id + index,
+                          key: row.node.id,
                         }
                       )
                     )}
