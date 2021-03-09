@@ -1,9 +1,8 @@
 module.exports = {
   client: {
-    includes: ["**/**/*.js"],
-    excludes: ["**/node_modules/**"],
+    includes: ["pages/**", "components/**"],
     service: {
-      name: "course-event-xmzs0a",
+      name: "next-course",
       url: process.env.NEXT_PUBLIC_GRAPHQL_URI,
     },
   },
