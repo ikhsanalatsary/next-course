@@ -3,6 +3,7 @@
         "apollographql.vscode-apollo",
         "mgmcdermott.vscode-language-babel",
         "esbenp.prettier-vscode",
-        "ijs.reactnextjssnippets"
+        "ijs.reactnextjssnippets",
+        "dbaeumer.vscode-eslint"
     ]
 }
