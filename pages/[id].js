@@ -12,6 +12,12 @@ import AppBar from "@material-ui/core/AppBar";
 import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
 import Skeleton from "@material-ui/lab/Skeleton";
+import List from "@material-ui/core/List";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemAvatar from "@material-ui/core/ListItemAvatar";
+import ListItemText from "@material-ui/core/ListItemText";
+import Avatar from "@material-ui/core/Avatar";
+import Divider from "@material-ui/core/Divider";
 import { gql, useQuery } from "@apollo/client";
 import { useRouter } from "next/router";
 import * as dayjs from "dayjs";
@@ -89,6 +95,12 @@ const useStyles = makeStyles((theme) => {
   };
 });
 
+let genders = ["men", "women"];
+
+function getRandomInt(max = 0) {
+  return Math.floor(Math.random() * Math.floor(max));
+}
+
 /**
  * @param {Props} props - react props
  */
@@ -107,6 +119,7 @@ export default function CourseDetail(props) {
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
+  let students = data?.courseEvent?.students?.edges ?? [];
   if (error) {
     return (
       <div className={classes.root}>
@@ -143,7 +156,12 @@ export default function CourseDetail(props) {
                   </Typography>
                   <Typography>{data.courseEvent.course.description}</Typography>
                 </CardContent>
-                <AppBar position="static" color="inherit">
+                <AppBar
+                  position="static"
+                  color="inherit"
+                  component="header"
+                  elevation={0}
+                >
                   <Tabs
                     value={value}
                     onChange={handleChange}
@@ -193,7 +211,24 @@ export default function CourseDetail(props) {
                   </Typography>
                 </TabPanel>
                 <TabPanel value={value} index={3}>
-                  Table here!
+                  <List disablePadding>
+                    {students.map((row, index) => (
+                      <>
+                        <ListItem>
+                          <ListItemAvatar>
+                            <Avatar
+                              alt={`Avatar random user ${index + 1}`}
+                              src={`https://randomuser.me/api/portraits/${
+                                genders[getRandomInt(2)]
+                              }/${index + 1}.jpg`}
+                            />
+                          </ListItemAvatar>
+                          <ListItemText primary={row.node.student.name} />
+                        </ListItem>
+                        <Divider variant="middle" component="li" />
+                      </>
+                    ))}
+                  </List>
                 </TabPanel>
               </Card>
             ) : (
