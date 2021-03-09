@@ -18,6 +18,9 @@ import ListItemAvatar from "@material-ui/core/ListItemAvatar";
 import ListItemText from "@material-ui/core/ListItemText";
 import Avatar from "@material-ui/core/Avatar";
 import Divider from "@material-ui/core/Divider";
+import Button from "@material-ui/core/Button";
+import MoreIcon from "@material-ui/icons/More";
+import CircularProgress from "@material-ui/core/CircularProgress";
 import { gql, useQuery } from "@apollo/client";
 import { useRouter } from "next/router";
 import * as dayjs from "dayjs";
@@ -108,10 +111,12 @@ export default function CourseDetail(props) {
   const router = useRouter();
   const { id } = router.query;
   const classes = useStyles();
-  const { data, error } = useQuery(COURSE_EVENTS_DETAIL, {
+  const first = 10;
+  const [loadingMore, setLoadingMore] = React.useState(false);
+  const { data, error, fetchMore } = useQuery(COURSE_EVENTS_DETAIL, {
     variables: {
       id,
-      first: 10,
+      first,
       after: null,
     },
   });
@@ -119,6 +124,33 @@ export default function CourseDetail(props) {
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
+  let handleLoadMore = React.useCallback(() => {
+    setLoadingMore(true);
+    fetchMore({
+      variables: {
+        first,
+        after: data.courseEvent.students.pageInfo.endCursor,
+      },
+      updateQuery: (previousResult, { fetchMoreResult }) => {
+        const newStudents = fetchMoreResult.courseEvent.students.edges;
+        const pageInfo = fetchMoreResult.courseEvent.students.pageInfo;
+        const { students, ...excludeStudent } = previousResult.courseEvent;
+        setLoadingMore(false);
+
+        return {
+          courseEvent: {
+            ...excludeStudent,
+            // Merging the student list
+            students: {
+              edges: [...students.edges, ...newStudents],
+              pageInfo,
+              __typename: students.__typename,
+            },
+          },
+        };
+      },
+    });
+  }, [fetchMore, data]);
   let students = data?.courseEvent?.students?.edges ?? [];
   if (error) {
     return (
@@ -212,23 +244,45 @@ export default function CourseDetail(props) {
                 </TabPanel>
                 <TabPanel value={value} index={3}>
                   <List disablePadding>
-                    {students.map((row, index) => (
-                      <>
-                        <ListItem>
-                          <ListItemAvatar>
-                            <Avatar
-                              alt={`Avatar random user ${index + 1}`}
-                              src={`https://randomuser.me/api/portraits/${
-                                genders[getRandomInt(2)]
-                              }/${index + 1}.jpg`}
-                            />
-                          </ListItemAvatar>
-                          <ListItemText primary={row.node.student.name} />
-                        </ListItem>
-                        <Divider variant="middle" component="li" />
-                      </>
-                    ))}
+                    {students.map((row, index) =>
+                      React.cloneElement(
+                        <>
+                          <ListItem>
+                            <ListItemAvatar>
+                              <Avatar
+                                alt={`Avatar random user ${index + 1}`}
+                                src={`https://randomuser.me/api/portraits/${
+                                  genders[getRandomInt(2)]
+                                }/${index + 1}.jpg`}
+                              />
+                            </ListItemAvatar>
+                            <ListItemText primary={row.node.student.name} />
+                          </ListItem>
+                          <Divider variant="middle" component="li" />
+                        </>,
+                        {
+                          key: row.node.id + index,
+                        }
+                      )
+                    )}
                   </List>
+                  <Box m={2} display="flex" justifyContent="center">
+                    <Button
+                      size="medium"
+                      color="secondary"
+                      variant="outlined"
+                      startIcon={
+                        loadingMore ? (
+                          <CircularProgress size={20} />
+                        ) : (
+                          <MoreIcon />
+                        )
+                      }
+                      onClick={handleLoadMore}
+                    >
+                      Load More
+                    </Button>
+                  </Box>
                 </TabPanel>
               </Card>
             ) : (
