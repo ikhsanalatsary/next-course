@@ -17,6 +17,9 @@ module.exports = {
     "react/react-in-jsx-scope": "off",
     "react/jsx-filename-extension": "off",
     "react/jsx-props-no-spreading": "off",
-    "no-underscore-dangle": "off"
+    "no-underscore-dangle": "off",
+    "prefer-const": "off",
+    "arrow-body-style": "off",
+    "jsx-a11y/anchor-is-valid": "off",
   },
 };
