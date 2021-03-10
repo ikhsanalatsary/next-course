@@ -1,34 +1,68 @@
-import React from "react";
-import { makeStyles } from "@material-ui/core/styles";
-import Box from "@material-ui/core/Box";
-import Card from "@material-ui/core/Card";
-import CardMedia from "@material-ui/core/CardMedia";
-import CardContent from "@material-ui/core/CardContent";
-import Container from "@material-ui/core/Container";
-import Grid from "@material-ui/core/Grid";
-import Typography from "@material-ui/core/Typography";
-import Paper from "@material-ui/core/Paper";
-import AppBar from "@material-ui/core/AppBar";
-import Tabs from "@material-ui/core/Tabs";
-import Tab from "@material-ui/core/Tab";
-import Skeleton from "@material-ui/lab/Skeleton";
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemAvatar from "@material-ui/core/ListItemAvatar";
-import ListItemText from "@material-ui/core/ListItemText";
-import Avatar from "@material-ui/core/Avatar";
-import Divider from "@material-ui/core/Divider";
-import Button from "@material-ui/core/Button";
-import MoreIcon from "@material-ui/icons/More";
-import CircularProgress from "@material-ui/core/CircularProgress";
-import { gql, useQuery } from "@apollo/client";
-import { useRouter } from "next/router";
-import * as dayjs from "dayjs";
-import * as customParseFormat from "dayjs/plugin/customParseFormat";
-import { Layout } from "../components/Layout";
-import { TabPanel, a11yProps } from "../components/TabPanel";
+import React from 'react';
+import { makeStyles } from '@material-ui/core/styles';
+import Box from '@material-ui/core/Box';
+import Card from '@material-ui/core/Card';
+import CardMedia from '@material-ui/core/CardMedia';
+import CardContent from '@material-ui/core/CardContent';
+import Container from '@material-ui/core/Container';
+import Grid from '@material-ui/core/Grid';
+import Typography from '@material-ui/core/Typography';
+import Paper from '@material-ui/core/Paper';
+import AppBar from '@material-ui/core/AppBar';
+import Tabs from '@material-ui/core/Tabs';
+import Tab from '@material-ui/core/Tab';
+import Skeleton from '@material-ui/lab/Skeleton';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemAvatar from '@material-ui/core/ListItemAvatar';
+import ListItemText from '@material-ui/core/ListItemText';
+import Avatar from '@material-ui/core/Avatar';
+import Divider from '@material-ui/core/Divider';
+import Button from '@material-ui/core/Button';
+import MoreIcon from '@material-ui/icons/More';
+import AddIcon from '@material-ui/icons/Add';
+import CircularProgress from '@material-ui/core/CircularProgress';
+import TextField from '@material-ui/core/TextField';
+import SendIcon from '@material-ui/icons/Send';
+import Modal from '@material-ui/core/Modal';
+import { gql, useMutation, useQuery } from '@apollo/client';
+import { useRouter } from 'next/router';
+import * as dayjs from 'dayjs';
+import * as customParseFormat from 'dayjs/plugin/customParseFormat';
+import { Layout } from '../components/Layout';
+import { TabPanel, a11yProps } from '../components/TabPanel';
 
 dayjs.extend(customParseFormat);
+
+/**
+ * convertBase64ToArray
+ * @param {string} value Base64 string
+ * @returns {[string, string, string, string]} List of strings
+ */
+function convertBase64ToArray(value) {
+  return JSON.parse(atob(value));
+}
+
+let STUDENT_MUTATION = gql`
+  mutation RegisterStudentToEvent($courseEventId: bigint!, $name: String!) {
+    insertStudentToCourseEvent(
+      objects: {
+        student: { data: { name: $name } }
+        courseEventId: $courseEventId
+      }
+    ) {
+      affected_rows
+      returning {
+        id
+        createdAt
+        student {
+          id
+          name
+        }
+      }
+    }
+  }
+`;
 
 let COURSE_EVENTS_DETAIL = gql`
   query CourseEventDetailQuery($id: ID!, $first: Int = 10, $after: String) {
@@ -60,6 +94,7 @@ let COURSE_EVENTS_DETAIL = gql`
         students: studentToCourseEvents_connection(
           first: $first
           after: $after
+          order_by: { createdAt: desc }
         ) {
           edges {
             cursor
@@ -83,6 +118,79 @@ let COURSE_EVENTS_DETAIL = gql`
   }
 `;
 
+function updateExistingRecord(store, result, { id, first }) {
+  let {
+    data: {
+      insertStudentToCourseEvent: { returning },
+    },
+  } = result;
+  // console.log(store, returning);
+  const data = store.readQuery({
+    query: COURSE_EVENTS_DETAIL,
+    variables: {
+      id,
+      first,
+      after: null,
+    },
+  });
+  // console.log('data', data);
+  let students = data.courseEvent.students.edges;
+  let newData = Array.isArray(returning) ? returning[0] : returning;
+  let studentToCourseEventCreatedAt = newData.createdAt;
+  let studentToCourseEventId = newData.id;
+  let studentToCourseEventIntId = convertBase64ToArray(newData.id)[3];
+  let newRawCursor = {
+    created_at: studentToCourseEventCreatedAt,
+    id: studentToCourseEventIntId,
+  };
+  let newCursor = btoa(JSON.stringify(newRawCursor));
+  // console.log('addStudent -> newData', newData);
+  // console.log('students', students);
+  students = [...students].slice(0, -1);
+  // console.log('after', students);
+  let mergedData = {
+    ...data,
+    courseEvent: {
+      ...data.courseEvent,
+      students: {
+        ...data.courseEvent.students,
+        edges: [
+          {
+            cursor: newCursor,
+            node: {
+              id: studentToCourseEventId,
+              student: {
+                id: newData.student.id,
+                name: newData.student.name,
+                __typename: 'students',
+              },
+              __typename: 'studentToCourseEvents',
+            },
+            __typename: 'studentToCourseEventsEdge',
+          },
+          ...students,
+        ],
+        pageInfo: {
+          ...data.courseEvent.students.pageInfo,
+          startCursor: newCursor,
+          endCursor: students[students.length - 1].cursor,
+          hasNextPage: true,
+        },
+      },
+    },
+  };
+  // console.log('mergedData', mergedData);
+  store.writeQuery({
+    query: COURSE_EVENTS_DETAIL,
+    data: mergedData,
+    variables: {
+      id,
+      first,
+      after: null,
+    },
+  });
+}
+
 const useStyles = makeStyles((theme) => {
   return {
     root: {
@@ -90,15 +198,31 @@ const useStyles = makeStyles((theme) => {
       padding: theme.spacing(2),
     },
     cardMedia: {
-      paddingTop: "56.25%", // 16:9
+      paddingTop: '56.25%', // 16:9
     },
     paper: {
-      padding: "8px",
+      padding: '8px',
+    },
+    modal: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      outline: 0,
+    },
+    input: {
+      backgroundColor: theme.palette.background.paper,
+      borderRadius: theme.shape.borderRadius,
+      padding: theme.spacing(2, 6, 4),
+      outline: 0,
+      '& .MuiTextField-root': {
+        margin: theme.spacing(1),
+        width: '25ch',
+      },
     },
   };
 });
 
-let genders = ["men", "women"];
+let genders = ['men', 'women'];
 
 function getRandomInt(max = 0) {
   return Math.floor(Math.random() * Math.floor(max));
@@ -112,7 +236,6 @@ export default function CourseDetail(props) {
   const { id } = router.query;
   const classes = useStyles();
   const first = 10;
-  const [loadingMore, setLoadingMore] = React.useState(false);
   const { data, error, fetchMore } = useQuery(COURSE_EVENTS_DETAIL, {
     variables: {
       id,
@@ -120,6 +243,41 @@ export default function CourseDetail(props) {
       after: null,
     },
   });
+  const [open, setOpen] = React.useState(false);
+  const handleOpen = () => {
+    setOpen(true);
+  };
+  const handleClose = () => {
+    setOpen(false);
+  };
+  let [addStudent] = useMutation(STUDENT_MUTATION);
+  let inputRef = React.createRef(null);
+  let saveBtnRef = React.createRef(null);
+  let handleSubmit = React.useCallback(
+    async (event) => {
+      event.preventDefault();
+      if (inputRef.current?.value) {
+        // eslint-disable-next-line prefer-destructuring
+        let value = inputRef.current.value;
+        inputRef.current.value = '';
+        try {
+          await addStudent({
+            variables: {
+              courseEventId: convertBase64ToArray(data.courseEvent.id)[3],
+              name: value,
+            },
+            update: (store, result) =>
+              updateExistingRecord(store, result, { id, first }),
+          });
+        } catch (e) {
+          console.error('err', e.message);
+        }
+        handleClose();
+      }
+    },
+    [addStudent, data, id, inputRef]
+  );
+  const [loadingMore, setLoadingMore] = React.useState(false);
   const [value, setValue] = React.useState(0);
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -152,9 +310,9 @@ export default function CourseDetail(props) {
       },
     });
   }, [fetchMore, data]);
-  let courseEvents = data?.courseEvent ?? {};
-  let students = courseEvents.students?.edges ?? [];
-  let hasNextPage = courseEvents.students?.pageInfo?.hasNextPage ?? false;
+  let courseEvent = data?.courseEvent ?? {};
+  let students = courseEvent.students?.edges ?? [];
+  let hasNextPage = courseEvent.students?.pageInfo?.hasNextPage ?? false;
   if (error) {
     return (
       <div className={classes.root}>
@@ -212,17 +370,17 @@ export default function CourseDetail(props) {
                 </AppBar>
                 <TabPanel value={value} index={0}>
                   <Typography>
-                    Mulai:{" "}
-                    {dayjs(data.courseEvent.startDate).format("DD MMMM YYYY")}
+                    Mulai:{' '}
+                    {dayjs(data.courseEvent.startDate).format('DD MMMM YYYY')}
                   </Typography>
                   <Typography>
-                    Sampai:{" "}
-                    {dayjs(data.courseEvent.endDate).format("DD MMMM YYYY")}
+                    Sampai:{' '}
+                    {dayjs(data.courseEvent.endDate).format('DD MMMM YYYY')}
                   </Typography>
                   <Typography>
-                    Jam:{" "}
-                    {dayjs(data.courseEvent.startTime, "HH:mm").format("HH:mm")}{" "}
-                    - {dayjs(data.courseEvent.endTime, "HH:mm").format("HH:mm")}
+                    Jam:{' '}
+                    {dayjs(data.courseEvent.startTime, 'HH:mm').format('HH:mm')}{' '}
+                    - {dayjs(data.courseEvent.endTime, 'HH:mm').format('HH:mm')}
                   </Typography>
                 </TabPanel>
                 <TabPanel value={value} index={1}>
@@ -246,6 +404,17 @@ export default function CourseDetail(props) {
                   </Typography>
                 </TabPanel>
                 <TabPanel value={value} index={3}>
+                  <Box m={1} display="flex" justifyContent="flex-end">
+                    <Button
+                      size="medium"
+                      color="secondary"
+                      variant="outlined"
+                      startIcon={<AddIcon />}
+                      onClick={handleOpen}
+                    >
+                      Register
+                    </Button>
+                  </Box>
                   <List disablePadding>
                     {students.map((row, index) =>
                       React.cloneElement(
@@ -305,6 +474,40 @@ export default function CourseDetail(props) {
           </Grid>
         </Grid>
       </Container>
+      <Modal
+        className={classes.modal}
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="register-student-modal"
+        aria-describedby="register-student-to-course-event-modal"
+      >
+        <form
+          className={classes.input}
+          noValidate
+          autoComplete="off"
+          onSubmit={handleSubmit}
+        >
+          <TextField
+            inputRef={inputRef}
+            id="outlined-name"
+            label="Name"
+            type="text"
+            variant="outlined"
+          />
+          <Box m={1} display="flex" justifyContent="flex-end">
+            <Button
+              ref={saveBtnRef}
+              type="submit"
+              size="medium"
+              color="secondary"
+              variant="outlined"
+              startIcon={<SendIcon />}
+            >
+              Register
+            </Button>
+          </Box>
+        </form>
+      </Modal>
     </div>
   );
 }
