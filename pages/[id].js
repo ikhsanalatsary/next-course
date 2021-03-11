@@ -12,26 +12,23 @@ import AppBar from '@material-ui/core/AppBar';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Skeleton from '@material-ui/lab/Skeleton';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemAvatar from '@material-ui/core/ListItemAvatar';
-import ListItemText from '@material-ui/core/ListItemText';
-import Avatar from '@material-ui/core/Avatar';
-import Divider from '@material-ui/core/Divider';
 import Button from '@material-ui/core/Button';
-import MoreIcon from '@material-ui/icons/More';
-import AddIcon from '@material-ui/icons/Add';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import PersonAddIcon from '@material-ui/icons/PersonAdd';
 import TextField from '@material-ui/core/TextField';
 import SendIcon from '@material-ui/icons/Send';
 import Modal from '@material-ui/core/Modal';
-import { gql, useMutation, useQuery } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { useRouter } from 'next/router';
 import * as dayjs from 'dayjs';
 import * as customParseFormat from 'dayjs/plugin/customParseFormat';
 import Image from 'next/image';
 import { Layout } from '../components/Layout';
 import { TabPanel, a11yProps } from '../components/TabPanel';
+import {
+  COURSE_EVENTS_DETAIL,
+  REGISTER_STUDENT_TO_EVENT as STUDENT_MUTATION,
+} from '../components/CourseDetail.gql';
+import { StudentList } from '../components/StudentList';
 
 dayjs.extend(customParseFormat);
 
@@ -43,81 +40,6 @@ dayjs.extend(customParseFormat);
 function convertBase64ToArray(value) {
   return JSON.parse(atob(value));
 }
-
-let STUDENT_MUTATION = gql`
-  mutation RegisterStudentToEvent($courseEventId: bigint!, $name: String!) {
-    insertStudentToCourseEvent(
-      objects: {
-        student: { data: { name: $name } }
-        courseEventId: $courseEventId
-      }
-    ) {
-      affected_rows
-      returning {
-        id
-        createdAt
-        student {
-          id
-          name
-        }
-      }
-    }
-  }
-`;
-
-let COURSE_EVENTS_DETAIL = gql`
-  query CourseEventDetailQuery($id: ID!, $first: Int = 10, $after: String) {
-    courseEvent: node(id: $id) {
-      id
-      ... on courseEvents {
-        id
-        course {
-          id
-          name
-          description
-        }
-        startDate
-        startTime
-        endDate
-        endTime
-        location {
-          id
-          name
-          address
-          latitude
-          longitude
-        }
-        teacher {
-          id
-          name
-          skill
-        }
-        students: studentToCourseEvents_connection(
-          first: $first
-          after: $after
-          order_by: { createdAt: desc }
-        ) {
-          edges {
-            cursor
-            node {
-              id
-              student {
-                id
-                name
-              }
-            }
-          }
-          pageInfo {
-            endCursor
-            hasNextPage
-            hasPreviousPage
-            startCursor
-          }
-        }
-      }
-    }
-  }
-`;
 
 function updateExistingRecord(store, result, { id, first }) {
   let {
@@ -220,12 +142,6 @@ const useStyles = makeStyles((theme) => {
   };
 });
 
-let genders = ['men', 'women'];
-
-function getRandomInt(max = 0) {
-  return Math.floor(Math.random() * Math.floor(max));
-}
-
 const picsumLoader = ({ src, width }) => {
   return `${src}/${width}`;
 };
@@ -279,45 +195,11 @@ export default function CourseDetail(props) {
     },
     [addStudent, data, id, inputRef]
   );
-  const [loadingMore, setLoadingMore] = React.useState(false);
   const [value, setValue] = React.useState(0);
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
-  let handleLoadMore = React.useCallback(() => {
-    setLoadingMore(true);
-    if (data.courseEvent.students.pageInfo.hasNextPage) {
-      fetchMore({
-        variables: {
-          first,
-          after: data.courseEvent.students.pageInfo.endCursor,
-        },
-        updateQuery: (previousResult, { fetchMoreResult }) => {
-          const newStudents = fetchMoreResult.courseEvent.students.edges;
-          // eslint-disable-next-line prefer-destructuring
-          const pageInfo = fetchMoreResult.courseEvent.students.pageInfo;
-          const { students, ...excludeStudent } = previousResult.courseEvent;
-
-          return {
-            courseEvent: {
-              ...excludeStudent,
-              // Merging the student list
-              students: {
-                edges: [...students.edges, ...newStudents],
-                pageInfo,
-                __typename: students.__typename,
-              },
-            },
-          };
-        },
-      })
-        .then(() => setLoadingMore(false))
-        .catch(() => setLoadingMore(false));
-    }
-  }, [fetchMore, data]);
   let courseEvent = data?.courseEvent ?? {};
-  let students = courseEvent.students?.edges ?? [];
-  let hasNextPage = courseEvent.students?.pageInfo?.hasNextPage ?? false;
   if (error) {
     return (
       <div className={classes.root}>
@@ -418,56 +300,19 @@ export default function CourseDetail(props) {
                   <Box m={1} display="flex" justifyContent="flex-end">
                     <Button
                       size="medium"
-                      color="secondary"
+                      color="primary"
                       variant="outlined"
-                      startIcon={<AddIcon />}
+                      startIcon={<PersonAddIcon />}
                       onClick={handleOpen}
                     >
                       Register
                     </Button>
                   </Box>
-                  <List disablePadding>
-                    {students.map((row, index) =>
-                      React.cloneElement(
-                        <>
-                          <ListItem>
-                            <ListItemAvatar>
-                              <Avatar
-                                alt={`Avatar random user ${index + 1}`}
-                                src={`https://randomuser.me/api/portraits/${
-                                  genders[getRandomInt(2)]
-                                }/${index + 1}.jpg`}
-                              />
-                            </ListItemAvatar>
-                            <ListItemText primary={row.node.student.name} />
-                          </ListItem>
-                          <Divider variant="middle" component="li" />
-                        </>,
-                        {
-                          key: row.node.id,
-                        }
-                      )
-                    )}
-                  </List>
-                  {hasNextPage && (
-                    <Box m={2} display="flex" justifyContent="center">
-                      <Button
-                        size="medium"
-                        color="secondary"
-                        variant="outlined"
-                        startIcon={
-                          loadingMore ? (
-                            <CircularProgress size={20} />
-                          ) : (
-                            <MoreIcon />
-                          )
-                        }
-                        onClick={handleLoadMore}
-                      >
-                        Load More
-                      </Button>
-                    </Box>
-                  )}
+                  <StudentList
+                    fetchMore={fetchMore}
+                    first={first}
+                    students={courseEvent.students}
+                  />
                 </TabPanel>
               </Card>
             ) : (
@@ -510,7 +355,7 @@ export default function CourseDetail(props) {
               ref={saveBtnRef}
               type="submit"
               size="medium"
-              color="secondary"
+              color="primary"
               variant="outlined"
               startIcon={<SendIcon />}
             >
