@@ -198,9 +198,6 @@ const useStyles = makeStyles((theme) => {
       flexGrow: 1,
       padding: theme.spacing(2),
     },
-    cardMedia: {
-      paddingTop: '56.25%', // 16:9
-    },
     paper: {
       padding: '8px',
     },
