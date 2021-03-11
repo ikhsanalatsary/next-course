@@ -29,6 +29,7 @@ import { gql, useMutation, useQuery } from '@apollo/client';
 import { useRouter } from 'next/router';
 import * as dayjs from 'dayjs';
 import * as customParseFormat from 'dayjs/plugin/customParseFormat';
+import Image from 'next/image';
 import { Layout } from '../components/Layout';
 import { TabPanel, a11yProps } from '../components/TabPanel';
 
@@ -36,7 +37,7 @@ dayjs.extend(customParseFormat);
 
 /**
  * convertBase64ToArray
- * @param {string} value Base64 string
+ * @param {string} value Base64 string ArrayLike '[1, ..., ..., intId]'
  * @returns {[string, string, string, string]} List of strings
  */
 function convertBase64ToArray(value) {
@@ -228,6 +229,10 @@ function getRandomInt(max = 0) {
   return Math.floor(Math.random() * Math.floor(max));
 }
 
+const picsumLoader = ({ src, width }) => {
+  return `${src}/${width}`;
+};
+
 /**
  * @param {Props} props - react props
  */
@@ -284,31 +289,34 @@ export default function CourseDetail(props) {
   };
   let handleLoadMore = React.useCallback(() => {
     setLoadingMore(true);
-    fetchMore({
-      variables: {
-        first,
-        after: data.courseEvent.students.pageInfo.endCursor,
-      },
-      updateQuery: (previousResult, { fetchMoreResult }) => {
-        const newStudents = fetchMoreResult.courseEvent.students.edges;
-        // eslint-disable-next-line prefer-destructuring
-        const pageInfo = fetchMoreResult.courseEvent.students.pageInfo;
-        const { students, ...excludeStudent } = previousResult.courseEvent;
-        setLoadingMore(false);
+    if (data.courseEvent.students.pageInfo.hasNextPage) {
+      fetchMore({
+        variables: {
+          first,
+          after: data.courseEvent.students.pageInfo.endCursor,
+        },
+        updateQuery: (previousResult, { fetchMoreResult }) => {
+          const newStudents = fetchMoreResult.courseEvent.students.edges;
+          // eslint-disable-next-line prefer-destructuring
+          const pageInfo = fetchMoreResult.courseEvent.students.pageInfo;
+          const { students, ...excludeStudent } = previousResult.courseEvent;
 
-        return {
-          courseEvent: {
-            ...excludeStudent,
-            // Merging the student list
-            students: {
-              edges: [...students.edges, ...newStudents],
-              pageInfo,
-              __typename: students.__typename,
+          return {
+            courseEvent: {
+              ...excludeStudent,
+              // Merging the student list
+              students: {
+                edges: [...students.edges, ...newStudents],
+                pageInfo,
+                __typename: students.__typename,
+              },
             },
-          },
-        };
-      },
-    });
+          };
+        },
+      })
+        .then(() => setLoadingMore(false))
+        .catch(() => setLoadingMore(false));
+    }
   }, [fetchMore, data]);
   let courseEvent = data?.courseEvent ?? {};
   let students = courseEvent.students?.edges ?? [];
@@ -338,11 +346,16 @@ export default function CourseDetail(props) {
           <Grid item xs={8}>
             {data ? (
               <Card>
-                <CardMedia
-                  className={classes.cardMedia}
-                  image="https://picsum.photos/500"
-                  title={data.courseEvent.course.name}
-                />
+                <CardMedia>
+                  <Image
+                    loader={picsumLoader}
+                    layout="responsive"
+                    src="https://picsum.photos"
+                    alt={data.courseEvent.course.name}
+                    width={500}
+                    height={300}
+                  />
+                </CardMedia>
                 <CardContent>
                   <Typography gutterBottom variant="h5" component="h2">
                     {data.courseEvent.course.name}

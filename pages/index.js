@@ -1,16 +1,17 @@
-import { makeStyles } from "@material-ui/core/styles";
-import Box from "@material-ui/core/Box";
-import Button from "@material-ui/core/Button";
-import Card from "@material-ui/core/Card";
-import CardActions from "@material-ui/core/CardActions";
-import CardMedia from "@material-ui/core/CardMedia";
-import CardContent from "@material-ui/core/CardContent";
-import Container from "@material-ui/core/Container";
-import Grid from "@material-ui/core/Grid";
-import Typography from "@material-ui/core/Typography";
-import Skeleton from "@material-ui/lab/Skeleton";
-import { gql, useQuery } from "@apollo/client";
-import Link from "next/link";
+import { makeStyles } from '@material-ui/core/styles';
+import Box from '@material-ui/core/Box';
+import Button from '@material-ui/core/Button';
+import Card from '@material-ui/core/Card';
+import CardActions from '@material-ui/core/CardActions';
+import CardMedia from '@material-ui/core/CardMedia';
+import CardContent from '@material-ui/core/CardContent';
+import Container from '@material-ui/core/Container';
+import Grid from '@material-ui/core/Grid';
+import Typography from '@material-ui/core/Typography';
+import Skeleton from '@material-ui/lab/Skeleton';
+import { gql, useQuery } from '@apollo/client';
+import Link from 'next/link';
+import Image from 'next/image';
 
 let COURSE_EVENTS_CONNECTION = gql`
   query Course {
@@ -36,14 +37,15 @@ let COURSE_EVENTS_CONNECTION = gql`
   }
 `;
 
+const picsumLoader = ({ src, width }) => {
+  return `${src}/${width}`;
+};
+
 const useStyles = makeStyles((theme) => {
   return {
     root: {
       flexGrow: 1,
       padding: theme.spacing(2),
-    },
-    cardMedia: {
-      paddingTop: "56.25%", // 16:9
     },
   };
 });
@@ -70,11 +72,16 @@ export default function Home(props) {
               <Grid item xs={12} sm={6} key={elem ? elem.node.id : index}>
                 <Card>
                   {elem ? (
-                    <CardMedia
-                      className={classes.cardMedia}
-                      image="https://picsum.photos/500"
-                      title={elem.node.course.name}
-                    />
+                    <CardMedia>
+                      <Image
+                        loader={picsumLoader}
+                        layout="responsive"
+                        src="https://picsum.photos"
+                        alt={elem.node.course.name}
+                        width={500}
+                        height={300}
+                      />
+                    </CardMedia>
                   ) : (
                     <Skeleton variant="rect" width={500} height={300} />
                   )}
