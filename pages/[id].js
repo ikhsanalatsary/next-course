@@ -340,7 +340,7 @@ export default function CourseDetail(props) {
           justify="center"
           alignItems="center"
         >
-          <Grid item xs={8}>
+          <Grid item xs={12} md={8}>
             {data ? (
               <Card>
                 <CardMedia>
@@ -371,6 +371,7 @@ export default function CourseDetail(props) {
                     indicatorColor="primary"
                     textColor="primary"
                     aria-label="Course detail"
+                    variant="scrollable"
                   >
                     <Tab label="Waktu tanggal" {...a11yProps(0)} />
                     <Tab label="Lokasi" {...a11yProps(1)} />
