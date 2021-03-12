@@ -28,8 +28,10 @@ function getProfileImage() {
   )}.jpg`;
 }
 
+/** @typedef {import('../generated/graphql').StudentToCourseEventsEdge} StudentToCourseEventsEdge */
+
 /**
- * @type {React.NamedExoticComponent<{ students: Array<object> }>} props - React Props
+ * @type {React.NamedExoticComponent<{ students: Array<StudentToCourseEventsEdge> }>} props - React Props
  */
 export let StudentListComponent = React.memo(
   ({ students }) => {
@@ -62,11 +64,28 @@ export let StudentListComponent = React.memo(
   }
 );
 
+/** @typedef {import('../generated/graphql').Node} Node */
+/** @typedef {import('../generated/graphql').Scalars['String']} Cursor */
+
 /**
- * @typedef {object} Props - react props
- * @property {function} fetchMore - a function from useQuery
- * @property {number} first - a number
- * @property {object} students - students connection
+ * @typedef {object} CourseEventsVariable
+ * @property {Node["id"]} id - params id
+ * @property {number} first - pick first records in total
+ * @property {Cursor | null} after - cursor node id
+ */
+
+/** @typedef {import('../generated/graphql').CourseEvents} CourseEvents */
+/** @typedef {CourseEvents & {students: CourseEvents['studentToCourseEvents_connection']}} EnhancedCourseEvents */
+/** @typedef {import('@apollo/client').QueryResult<{courseEvent: EnhancedCourseEvents }, CourseEventsVariable>} Result */
+
+/** @typedef {import('../generated/graphql').StudentToCourseEventsConnection} StudentToCourseEventsConnection */
+/** @typedef {Result['fetchMore']} fetchMore  */
+
+/**
+ * @typedef {object} Props - React props
+ * @property {fetchMore} fetchMore - a function from useQuery
+ * @property {number} first - pick first records in total
+ * @property {StudentToCourseEventsConnection} students - students connection
  */
 
 /**
@@ -106,10 +125,19 @@ export let StudentList = React.memo(
             };
           },
         })
-          .then(() => setLoadingMore(false))
-          .catch(() => setLoadingMore(false));
+          .then(() => {
+            setLoadingMore(false);
+          })
+          .catch(() => {
+            setLoadingMore(false);
+          });
       }
-    }, [fetchMore, first, students]);
+    }, [
+      fetchMore,
+      first,
+      students.pageInfo.endCursor,
+      students.pageInfo.hasNextPage,
+    ]);
 
     return (
       <>

@@ -215,7 +215,24 @@ export default function CourseDetail(props) {
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
-  let courseEvent = data?.courseEvent ?? {};
+  /** @type {EnhancedCourseEvents} - pick courseEvent object */
+  let courseEvent = data?.courseEvent ?? { courseEvent: {} };
+  let startDate = React.useMemo(
+    () => dayjs(courseEvent.startDate).format('DD MMMM YYYY'),
+    [courseEvent.startDate]
+  );
+  let endDate = React.useMemo(
+    () => dayjs(courseEvent.endDate).format('DD MMMM YYYY'),
+    [courseEvent.endDate]
+  );
+  let startTime = React.useMemo(
+    () => dayjs(courseEvent.startTime, 'HH:mm').format('HH:mm'),
+    [courseEvent.startTime]
+  );
+  let endTime = React.useMemo(
+    () => dayjs(courseEvent.endTime, 'HH:mm').format('HH:mm'),
+    [courseEvent.endTime]
+  );
   if (error) {
     return (
       <div className={classes.root}>
@@ -278,18 +295,10 @@ export default function CourseDetail(props) {
                   </Tabs>
                 </AppBar>
                 <TabPanel value={value} index={0}>
+                  <Typography>Mulai: {startDate}</Typography>
+                  <Typography>Sampai: {endDate}</Typography>
                   <Typography>
-                    Mulai:{' '}
-                    {dayjs(data.courseEvent.startDate).format('DD MMMM YYYY')}
-                  </Typography>
-                  <Typography>
-                    Sampai:{' '}
-                    {dayjs(data.courseEvent.endDate).format('DD MMMM YYYY')}
-                  </Typography>
-                  <Typography>
-                    Jam:{' '}
-                    {dayjs(data.courseEvent.startTime, 'HH:mm').format('HH:mm')}{' '}
-                    - {dayjs(data.courseEvent.endTime, 'HH:mm').format('HH:mm')}
+                    Jam: {startTime} - {endTime}
                   </Typography>
                 </TabPanel>
                 <TabPanel value={value} index={1}>
