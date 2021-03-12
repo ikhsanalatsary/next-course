@@ -121,7 +121,7 @@ let COURSE_EVENTS_DETAIL = gql`
 
 /**
  * @param {import('@apollo/client').ApolloCache<insertStudentToCourseEvent>} store - inMemoryCache
- * @param {import('@apollo/client').FetchResult<insertStudentToCourseEvent, Record<string, any>, Record<string, any>>} result
+ * @param {import('@apollo/client').FetchResult<insertStudentToCourseEvent>} result
  * @param {{id: Node['id'], first: number}}
  */
 function updateExistingRecord(store, result, { id, first }) {
