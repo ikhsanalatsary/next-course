@@ -41,6 +41,11 @@ function convertBase64ToArray(value) {
   return JSON.parse(atob(value));
 }
 
+/**
+ * @param {import('@apollo/client').ApolloCache<insertStudentToCourseEvent>} store - inMemoryCache
+ * @param {import('@apollo/client').FetchResult<insertStudentToCourseEvent, Record<string, any>, Record<string, any>>} result
+ * @param {{id: Node['id'], first: number}}
+ */
 function updateExistingRecord(store, result, { id, first }) {
   let {
     data: {
@@ -48,6 +53,7 @@ function updateExistingRecord(store, result, { id, first }) {
     },
   } = result;
   // console.log(store, returning);
+  /** @type {{courseEvent: EnhancedCourseEvents}} */
   const data = store.readQuery({
     query: COURSE_EVENTS_DETAIL,
     variables: {
@@ -159,6 +165,8 @@ const picsumLoader = ({ src, width }) => {
 /** @typedef {import('../generated/graphql').CourseEvents} CourseEvents */
 /** @typedef {CourseEvents & {students: CourseEvents['studentToCourseEvents_connection']}} EnhancedCourseEvents */
 /** @typedef {import('@apollo/client').QueryResult<{courseEvent: EnhancedCourseEvents }, CourseEventsVariable>} Result */
+/** @typedef {import('../generated/graphql').Mutation_Root} insertStudentToCourseEvent */
+/** @typedef {import('@apollo/client').MutationTuple<insertStudentToCourseEvent, {courseEventId: number, name: string}>} MutationResponse */
 
 /**
  * @param {Props} props - react props
@@ -184,6 +192,7 @@ export default function CourseDetail(props) {
   const handleClose = () => {
     setOpen(false);
   };
+  /** @type {MutationResponse} */
   let [addStudent] = useMutation(STUDENT_MUTATION);
   let inputRef = React.createRef(null);
   let saveBtnRef = React.createRef(null);
