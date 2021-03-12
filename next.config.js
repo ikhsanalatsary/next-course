@@ -1,5 +1,5 @@
 module.exports = {
   images: {
-    domains: ['https://picsum.photos', 'https://randomuser.me'],
+    domains: ['picsum.photos', 'randomuser.me', 'lusaxweb.github.io'],
   },
 };

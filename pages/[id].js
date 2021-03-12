@@ -22,6 +22,7 @@ import { useRouter } from 'next/router';
 import * as dayjs from 'dayjs';
 import * as customParseFormat from 'dayjs/plugin/customParseFormat';
 import Image from 'next/image';
+import Head from 'next/head';
 import { Layout } from '../components/Layout';
 import { TabPanel, a11yProps } from '../components/TabPanel';
 import {
@@ -169,9 +170,9 @@ const picsumLoader = ({ src, width }) => {
 /** @typedef {import('@apollo/client').MutationTuple<insertStudentToCourseEvent, {courseEventId: number, name: string}>} MutationResponse */
 
 /**
- * @param {Props} props - react props
+ * @param {Props} _props - react props
  */
-export default function CourseDetail(props) {
+export default function CourseDetail(_props) {
   const router = useRouter();
   /** @type {{ id: Node['id'] }} - params id */
   const { id } = router.query;
@@ -256,6 +257,14 @@ export default function CourseDetail(props) {
 
   return (
     <div className={classes.root}>
+      <Head>
+        <title>
+          {data?.courseEvent.course.name
+            ? data?.courseEvent.course.name
+            : 'Event Detail'}
+        </title>
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
       <Container maxWidth="lg">
         <Grid
           container
@@ -403,13 +412,12 @@ export default function CourseDetail(props) {
 }
 
 /** @typedef {import('next').GetServerSidePropsContext} GetServerSidePropsContext  */
-/** @typedef {import('next').InferGetServerSidePropsType} InferGetServerSidePropsType  */
-/** @typedef {InferGetServerSidePropsType<typeof getServerSideProps>} Props  */
+/** @typedef {import('next').InferGetServerSidePropsType<typeof getServerSideProps>} Props  */
 
 /**
  * @param {GetServerSidePropsContext} ctx - GetServerSidePropsContext
  */
-export async function getServerSideProps(ctx) {
-  // Pass data to the page via props
-  return { props: {} };
-}
+// export async function getServerSideProps(ctx) {
+//   // Pass data to the page via props
+//   return { props: {} };
+// }

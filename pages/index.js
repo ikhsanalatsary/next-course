@@ -11,6 +11,7 @@ import Typography from '@material-ui/core/Typography';
 import { gql } from '@apollo/client';
 import Link from 'next/link';
 import Image from 'next/image';
+import Head from 'next/head';
 import { initializeApollo } from '../lib/apolloClient';
 
 let COURSE_EVENTS_CONNECTION = gql`
@@ -37,10 +38,6 @@ let COURSE_EVENTS_CONNECTION = gql`
   }
 `;
 
-const picsumLoader = ({ src, width }) => {
-  return `${src}/${width}`;
-};
-
 const useStyles = makeStyles((theme) => {
   return {
     root: {
@@ -61,6 +58,10 @@ export default function Home({ courseEvents }) {
 
   return (
     <div className={classes.root}>
+      <Head>
+        <title>House of programmer Event</title>
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
       <Container maxWidth="md">
         <Grid
           container
@@ -74,9 +75,8 @@ export default function Home({ courseEvents }) {
               <Card>
                 <CardMedia>
                   <Image
-                    loader={picsumLoader}
                     layout="responsive"
-                    src="https://picsum.photos"
+                    src="https://lusaxweb.github.io/vuesax/card.png"
                     alt={elem.node.course.name}
                     width={500}
                     height={300}
@@ -109,9 +109,9 @@ export default function Home({ courseEvents }) {
 /** @typedef {import('next').InferGetStaticPropsType<typeof getStaticProps>} Props  */
 
 /**
- * @param {GetStaticPropsContext} context - props context
+ * @param {GetStaticPropsContext} _context - props context
  */
-export async function getStaticProps(context) {
+export async function getStaticProps(_context) {
   let client = initializeApollo();
   /** @type {Result} */
   let result = await client.query({

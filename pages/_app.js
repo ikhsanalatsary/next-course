@@ -1,16 +1,17 @@
-import "../styles/globals.css";
-import React from "react";
-import Head from "next/head";
-import { ThemeProvider, makeStyles } from "@material-ui/core/styles";
-import CssBaseline from "@material-ui/core/CssBaseline";
-import AppBar from "@material-ui/core/AppBar";
-import Toolbar from "@material-ui/core/Toolbar";
-import Typography from "@material-ui/core/Typography";
-import IconButton from "@material-ui/core/IconButton";
-import MenuIcon from "@material-ui/icons/Menu";
-import { ApolloProvider } from "@apollo/client";
-import { useApollo } from "../lib/apolloClient";
-import theme from "../lib/theme";
+import '../styles/globals.css';
+import React from 'react';
+import Head from 'next/head';
+import Link from 'next/link';
+import { ThemeProvider, makeStyles } from '@material-ui/core/styles';
+import CssBaseline from '@material-ui/core/CssBaseline';
+import AppBar from '@material-ui/core/AppBar';
+import Toolbar from '@material-ui/core/Toolbar';
+import Typography from '@material-ui/core/Typography';
+import IconButton from '@material-ui/core/IconButton';
+import MenuIcon from '@material-ui/icons/EmojiEvents';
+import { ApolloProvider } from '@apollo/client';
+import { useApollo } from '../lib/apolloClient';
+import theme from '../lib/theme';
 
 // eslint-disable-next-line no-shadow
 const useStyles = makeStyles((theme) => ({
@@ -30,7 +31,7 @@ function MyApp({ Component, pageProps }) {
   const classes = useStyles();
   React.useEffect(() => {
     // Remove the server-side injected CSS.
-    const jssStyles = document.querySelector("#jss-server-side");
+    const jssStyles = document.querySelector('#jss-server-side');
     if (jssStyles) {
       jssStyles.parentElement.removeChild(jssStyles);
     }
@@ -54,12 +55,14 @@ function MyApp({ Component, pageProps }) {
               edge="start"
               className={classes.menuButton}
               color="inherit"
-              aria-label="menu"
+              aria-label="event"
             >
               <MenuIcon />
             </IconButton>
             <Typography variant="h6" className={classes.title}>
-              Course
+              <Link href="/">
+                <a>Event</a>
+              </Link>
             </Typography>
           </Toolbar>
         </AppBar>
