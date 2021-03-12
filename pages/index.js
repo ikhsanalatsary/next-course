@@ -50,11 +50,15 @@ const useStyles = makeStyles((theme) => {
   };
 });
 
+/** @typedef {import('../generated/graphql').CourseEventsConnection} CourseEvents */
+/** @typedef {import('@apollo/client').QueryResult<{courseEvents: CourseEvents}>} Result */
+
 /**
  * @param {Props} props - react props
  */
 export default function Home(props) {
   const classes = useStyles();
+  /** @type {Result} - Query result for courseEvent */
   const { data, error, loading } = useQuery(COURSE_EVENTS_CONNECTION);
   if (error) return <div>Error loading courses.</div>;
   return (
@@ -67,11 +71,10 @@ export default function Home(props) {
           justify="center"
           alignItems="center"
         >
-          {(loading ? Array.from({ length: 2 }) : data.courseEvents.edges).map(
-            (elem, index) => (
-              <Grid item xs={12} sm={6} key={elem ? elem.node.id : index}>
-                <Card>
-                  {elem ? (
+          {data && !loading
+            ? data.courseEvents.edges.map((elem) => (
+                <Grid item xs={12} sm={6} key={elem.node.id}>
+                  <Card>
                     <CardMedia>
                       <Image
                         loader={picsumLoader}
@@ -82,28 +85,13 @@ export default function Home(props) {
                         height={300}
                       />
                     </CardMedia>
-                  ) : (
-                    <Skeleton variant="rect" width={500} height={300} />
-                  )}
 
-                  <CardContent>
-                    {elem ? (
-                      <>
-                        <Typography gutterBottom variant="h5" component="h2">
-                          {elem.node.course.name}
-                        </Typography>
-                        <Typography>{elem.node.course.description}</Typography>
-                      </>
-                    ) : (
-                      <Box pt={0.5}>
-                        <Skeleton />
-                        <Skeleton width="80%" />
-                        <Skeleton width="60%" />
-                      </Box>
-                    )}
-                  </CardContent>
-
-                  {elem && (
+                    <CardContent>
+                      <Typography gutterBottom variant="h5" component="h2">
+                        {elem.node.course.name}
+                      </Typography>
+                      <Typography>{elem.node.course.description}</Typography>
+                    </CardContent>
                     <CardActions>
                       <Button size="medium" color="primary">
                         <Link href={`/${elem.node.id}`}>
@@ -111,11 +99,23 @@ export default function Home(props) {
                         </Link>
                       </Button>
                     </CardActions>
-                  )}
-                </Card>
-              </Grid>
-            )
-          )}
+                  </Card>
+                </Grid>
+              ))
+            : Array.from({ length: 2 }).map((_elem, index) => (
+                <Grid item xs={12} sm={6} key={String(index)}>
+                  <Card>
+                    <Skeleton variant="rect" width={500} height={300} />
+                    <CardContent>
+                      <Box pt={0.5}>
+                        <Skeleton />
+                        <Skeleton width="80%" />
+                        <Skeleton width="60%" />
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
         </Grid>
       </Container>
     </div>
