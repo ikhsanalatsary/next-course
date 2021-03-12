@@ -230,14 +230,30 @@ const picsumLoader = ({ src, width }) => {
   return `${src}/${width}`;
 };
 
+/** @typedef {import('../generated/graphql').Node} Node */
+/** @typedef {import('../generated/graphql').Scalars['String']} Cursor */
+
+/**
+ * @typedef {object} CourseEventsVariable
+ * @property {Node["id"]} id - params id
+ * @property {number} first - pick first records in total
+ * @property {Cursor | null} after - cursor node id
+ */
+
+/** @typedef {import('../generated/graphql').CourseEvents} CourseEvents */
+/** @typedef {CourseEvents & {students: CourseEvents['studentToCourseEvents_connection']}} EnhancedCourseEvents */
+/** @typedef {import('@apollo/client').QueryResult<{courseEvent: EnhancedCourseEvents }, CourseEventsVariable>} Result */
+
 /**
  * @param {Props} props - react props
  */
 export default function CourseDetail(props) {
   const router = useRouter();
+  /** @type {{ id: Node['id'] }} - params id */
   const { id } = router.query;
   const classes = useStyles();
   const first = 10;
+  /** @type {Result} - Query result for courseEvent */
   const { data, error, fetchMore } = useQuery(COURSE_EVENTS_DETAIL, {
     variables: {
       id,
@@ -472,7 +488,7 @@ export default function CourseDetail(props) {
               </Card>
             ) : (
               <Card>
-                <Skeleton variant="rect" width="100%" height={500} />
+                <Skeleton variant="rect" width="100%" height={300} />
                 <CardContent>
                   <Box pt={0.5}>
                     <Skeleton />
