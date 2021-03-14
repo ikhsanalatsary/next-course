@@ -120,5 +120,6 @@ export async function getStaticProps(_context) {
 
   return {
     props: { courseEvents: result.data.courseEvents },
+    revalidate: 1,
   };
 }

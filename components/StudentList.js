@@ -37,15 +37,12 @@ export let StudentListComponent = React.memo(
   ({ students }) => {
     return (
       <List disablePadding>
-        {students.map((row, index) =>
+        {students.map((row) =>
           React.cloneElement(
             <>
               <ListItem>
                 <ListItemAvatar>
-                  <Avatar
-                    alt={`Avatar random user ${index + 1}`}
-                    src={getProfileImage()}
-                  />
+                  <Avatar alt={row.node.student.name} src={getProfileImage()} />
                 </ListItemAvatar>
                 <ListItemText primary={row.node.student.name} />
               </ListItem>
