@@ -1,5 +1,5 @@
-import Typography from "@material-ui/core/Typography";
-import Box from "@material-ui/core/Box";
+/* eslint-disable react/prop-types */
+import Box from '@material-ui/core/Box';
 
 export function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -20,6 +20,6 @@ export function TabPanel(props) {
 export function a11yProps(index) {
   return {
     id: `course-detail-tab-${index}`,
-    "aria-controls": `course-detail-tabpanel-${index}`,
+    'aria-controls': `course-detail-tabpanel-${index}`,
   };
 }
